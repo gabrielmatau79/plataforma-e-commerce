@@ -1,0 +1,84 @@
+# Service-specific CI workflow for products-service, including smoke test and Docker image build.
+name: Products Service CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/products-service/**'
+      - 'docker/products-service.Dockerfile'
+      - 'docker-compose.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/products-service-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/products-service/**'
+      - 'docker/products-service.Dockerfile'
+      - 'docker-compose.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/products-service-ci.yml'
+
+jobs:
+  products-service-ci:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm check-format
+
+      - name: Check types
+        run: pnpm check-types
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Validate Docker Compose
+        run: docker compose config -q
+
+      - name: Build products-service
+        run: pnpm build:products-service
+
+      - name: Run tests
+        run: pnpm test -- --passWithNoTests
+
+      - name: Start smoke environment
+        run: docker compose up -d postgres products-service
+
+      - name: Smoke test health endpoint
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:3001/health; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Build Docker image
+        run: docker build -f docker/products-service.Dockerfile -t products-service:ci .
+
+      - name: Stop smoke environment
+        if: always()
+        run: docker compose down -v

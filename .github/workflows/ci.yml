@@ -1,0 +1,59 @@
+# General CI workflow that validates format, types, lint, build and tests for the monorepo.
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+  push:
+    branches:
+      - main
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check Format
+        run: pnpm check-format
+
+      - name: Check Types
+        run: pnpm check-types
+
+      - name: Run Lint
+        run: pnpm lint
+
+      - name: Validate Docker Compose
+        run: docker compose config -q
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run Tests
+        run: pnpm test -- --passWithNoTests
