@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 RUN corepack enable
@@ -9,7 +9,7 @@ COPY apps ./apps
 RUN pnpm install --frozen-lockfile
 RUN pnpm build:products-service
 
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 RUN corepack enable
