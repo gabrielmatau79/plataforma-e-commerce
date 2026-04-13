@@ -1,0 +1,40 @@
+@startuml
+title Simplified E-commerce Backend Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor Client
+
+node "Local / Cloud Runtime" {
+  component "API Gateway\nNestJS\nPort 3000" as APIGW
+  component "Products Service\nNestJS\nPort 3001" as PRODUCTS
+  component "Orders Service\nNestJS\nPort 3002" as ORDERS
+  database "PostgreSQL\nPort 5432" as DB
+}
+
+Client --> APIGW : HTTP REST
+APIGW --> PRODUCTS : /api/products
+APIGW --> ORDERS : /api/orders
+ORDERS --> PRODUCTS : Validate product\nand retrieve price/stock
+
+PRODUCTS --> DB : catalog_products
+ORDERS --> DB : orders_orders\norders_order_items
+
+note right of APIGW
+Single public entry point
+for clients
+end note
+
+note right of PRODUCTS
+Responsible for
+product catalog
+end note
+
+note right of ORDERS
+Responsible for
+order creation and listing
+end note
+
+@enduml

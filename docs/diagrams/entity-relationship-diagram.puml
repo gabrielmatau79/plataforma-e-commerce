@@ -1,0 +1,41 @@
+@startuml
+title Simplified E-commerce ER Diagram
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+entity "catalog_products" as products {
+  * id : int <<PK>>
+  --
+  name : varchar(120)
+  description : text
+  price : numeric(10,2)
+  stock : int
+  createdAt : timestamp
+  updatedAt : timestamp
+}
+
+entity "orders_orders" as orders {
+  * id : int <<PK>>
+  --
+  status : varchar(40)
+  total : numeric(10,2)
+  createdAt : timestamp
+  updatedAt : timestamp
+}
+
+entity "orders_order_items" as order_items {
+  * id : int <<PK>>
+  --
+  orderId : int <<FK>>
+  productId : int <<FK>>
+  quantity : int
+  unitPrice : numeric(10,2)
+  subtotal : numeric(10,2)
+}
+
+orders ||--o{ order_items : contains
+products ||--o{ order_items : referenced by
+@enduml
