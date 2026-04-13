@@ -1,0 +1,41 @@
+@startuml AWS
+title AWS Deployment Proposal
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor User
+
+cloud "AWS" {
+  component "App Runner\nAPI Gateway" as APIGW
+  component "App Runner\nProducts Service" as PRODUCTS
+  component "App Runner\nOrders Service" as ORDERS
+
+  cloud "Amazon ECR" as ECR
+
+  frame "VPC" {
+    component "App Runner\nVPC Connector" as VPC_CONN
+    database "Amazon RDS\nPostgreSQL" as RDS
+  }
+}
+
+User --> APIGW : HTTPS
+APIGW --> PRODUCTS : HTTP
+APIGW --> ORDERS : HTTP
+ORDERS --> PRODUCTS : HTTP
+
+APIGW ..> ECR : container image
+PRODUCTS ..> ECR : container image
+ORDERS ..> ECR : container image
+
+PRODUCTS --> VPC_CONN
+ORDERS --> VPC_CONN
+VPC_CONN --> RDS : PostgreSQL
+
+note right of RDS
+Private database access
+through VPC connectivity
+end note
+
+@enduml

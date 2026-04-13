@@ -1,0 +1,23 @@
+@startuml
+title Order Creation Flow
+
+actor Client
+participant "API Gateway" as APIGW
+participant "Orders Service" as ORDERS
+participant "Products Service" as PRODUCTS
+database "PostgreSQL" as DB
+
+Client -> APIGW : POST /api/orders
+APIGW -> ORDERS : POST /orders
+
+loop for each item
+  ORDERS -> PRODUCTS : GET /products/:id
+  PRODUCTS --> ORDERS : product data
+end
+
+ORDERS -> ORDERS : validate stock\ncalculate totals
+ORDERS -> DB : save order and items
+DB --> ORDERS : persisted order
+ORDERS --> APIGW : created order
+APIGW --> Client : 201 Created
+@enduml
