@@ -6,6 +6,7 @@ import { HealthController } from './health.controller';
 import { Order } from './orders/order.entity';
 import { OrderItem } from './orders/order-item.entity';
 import { OrdersModule } from './orders/orders.module';
+import { ProductReference } from './products/product-reference.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { OrdersModule } from './orders/orders.module';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.getOrThrow<string>('DATABASE_URL'),
-        entities: [Order, OrderItem],
+        entities: [Order, OrderItem, ProductReference],
         synchronize: true,
       }),
     }),

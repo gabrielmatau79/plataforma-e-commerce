@@ -51,7 +51,7 @@ export class OrdersService {
   }
 
   async create(createOrderDto: CreateOrderDto) {
-    const items = await Promise.all(
+    const itemsData = await Promise.all(
       createOrderDto.items.map(async (item) => {
         const product = await this.fetchProduct(item.productId);
 
@@ -73,18 +73,32 @@ export class OrdersService {
     );
 
     const total = Number(
-      items
+      itemsData
         .reduce((sum, item) => sum + Number(item.subtotal ?? 0), 0)
         .toFixed(2),
     );
 
-    const order = this.orderRepository.create({
-      status: 'CREATED',
-      total,
-      items: items as OrderItem[],
-    });
+    return this.orderRepository.manager.transaction(async (entityManager) => {
+      const order = entityManager.create(Order, {
+        status: 'CREATED',
+        total,
+      });
 
-    return this.orderRepository.save(order);
+      const savedOrder = await entityManager.save(Order, order);
+
+      const orderItems = itemsData.map((item) =>
+        entityManager.create(OrderItem, {
+          ...item,
+          orderId: savedOrder.id,
+        }),
+      );
+
+      await entityManager.save(OrderItem, orderItems);
+
+      return entityManager.findOneOrFail(Order, {
+        where: { id: savedOrder.id },
+      });
+    });
   }
 
   private async fetchProduct(productId: number): Promise<ProductSnapshot> {

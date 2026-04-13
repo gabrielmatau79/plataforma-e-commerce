@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ProductReference } from '../products/product-reference.entity';
 import { Order } from './order.entity';
 
 const decimalTransformer = {
@@ -28,6 +29,13 @@ export class OrderItem {
 
   @Column()
   productId!: number;
+
+  @ManyToOne(() => ProductReference, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'productId', referencedColumnName: 'id' })
+  product!: ProductReference;
 
   @Column({ type: 'int' })
   quantity!: number;
